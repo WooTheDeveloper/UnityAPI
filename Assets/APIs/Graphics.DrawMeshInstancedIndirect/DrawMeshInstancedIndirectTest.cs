@@ -20,6 +20,8 @@ public class DrawMeshInstancedIndirectTest : MonoBehaviour
         UpdateBuffers();
     }
 
+    public int drawCallCount = 1;
+    
     void Update() {
         // Update starting position buffer
         if (cachedInstanceCount != instanceCount || cachedSubMeshIndex != subMeshIndex)
@@ -30,7 +32,10 @@ public class DrawMeshInstancedIndirectTest : MonoBehaviour
             instanceCount = (int)Mathf.Clamp(instanceCount + Input.GetAxis("Horizontal") * 40000, 1.0f, 5000000.0f);
 
         // Render
-        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);
+        for (int i = 0; i < drawCallCount; i++)
+        {
+            Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);    
+        }
     }
 
     void OnGUI() {
