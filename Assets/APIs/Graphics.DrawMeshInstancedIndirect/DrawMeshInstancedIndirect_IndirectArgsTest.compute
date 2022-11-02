@@ -1,0 +1,52 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct MatrixData{
+    float4x4 o2w;
+    float4x4 w2o;
+};
+
+#define GROUP_SIZE_X 64
+ 
+StructuredBuffer<MatrixData> MatrixDataBufferIN;
+RWStructuredBuffer<uint> argsBuffer;
+RWStructuredBuffer<MatrixData> MatrixDataBufferLOD0;
+RWStructuredBuffer<MatrixData> MatrixDataBufferLOD1;
+RWStructuredBuffer<MatrixData> MatrixDataBufferLOD2;
+uint instanceCount;
+
+
+[numthreads(GROUP_SIZE_X,1,1)]
+void CSMain (
+        in uint3 _dispatchThreadID : SV_DispatchThreadID, // DispatchThreadID  = dot(GroupID, numthreads) + GroupThreadId;
+        in uint  _groupIndex       : SV_GroupIndex, // uint GroupIndex = unique index of a thread inside a group
+        in uint3 _groupID          : SV_GroupID, // GroupID = index for each dimension inside a ThreadGroupCount 
+        in uint3 _groupThreadID    : SV_GroupThreadID // uint3 GroupThreadId = indices for each dimension inside a group of the current thread
+        )
+{
+    //过滤掉越界的组
+    uint dtid = _dispatchThreadID.x;
+    if (dtid >= instanceCount) return;
+    
+    GroupMemoryBarrierWithGroupSync();
+    MatrixData data = MatrixDataBufferIN[dtid];
+    
+    uint origIdx;
+    float4x4 o2w = data.o2w;
+    float3 postionWS = float3(o2w[0][3],o2w[1][3],o2w[2][3]);
+    uint lod = 2;
+    lod -= step(postionWS.x ,8.0);
+    lod -= step(postionWS.x ,4.0);
+    if(lod==0){
+        InterlockedAdd(argsBuffer[1],1,origIdx);
+        MatrixDataBufferLOD0[origIdx] = data;
+    }
+    if(lod==1){
+        InterlockedAdd(argsBuffer[6],1,origIdx);
+        MatrixDataBufferLOD1[origIdx] = data;
+    }
+    if(lod==2){
+        InterlockedAdd(argsBuffer[11],1,origIdx);
+        MatrixDataBufferLOD2[origIdx] = data;
+    }
+}
