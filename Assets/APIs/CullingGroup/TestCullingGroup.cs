@@ -49,6 +49,19 @@ public class TestCullingGroup : MonoBehaviour
         {
             Debug.Log($"isvisible{cg.IsVisible(1)}  distance{cg.GetDistance(1)}" );
         }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            var tr = allSpheres[2];
+            Debug.Log(tr.position);
+            var bss = new BoundingSphere[1];
+            bss[0].position = tr.position;
+            bss[0].radius = tr.localScale.x / 2f;
+            cg.SetBoundingSpheres(bss);
+            var visible = cg.IsVisible(0);
+            Debug.Log(visible);
+
+        }
     }
 
     private void OnDisable()
