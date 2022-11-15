@@ -4,10 +4,13 @@
     using UnityEngine.InputSystem.Controls;
 #endif
 
+using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace UnityTemplateProjects
 {
+    [ExecuteAlways]
     public class SimpleCameraController : MonoBehaviour
     {
         class CameraState
@@ -80,6 +83,12 @@ namespace UnityTemplateProjects
         {
             m_TargetCameraState.SetFromTransform(transform);
             m_InterpolatingCameraState.SetFromTransform(transform);
+            EditorApplication.update += Update;
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= Update;
         }
 
         Vector3 GetInputTranslationDirection()

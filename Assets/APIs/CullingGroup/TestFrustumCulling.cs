@@ -26,11 +26,16 @@ public class TestFrustumCulling : MonoBehaviour
     private void Update()
     {
         var planes = GeometryUtility.CalculateFrustumPlanes(SceneView.lastActiveSceneView.camera);
-        isCull = CamCull(planes);
+        if (UseImplovedWay)
+        {
+            isCull = BetterCamCull(planes);
+        }
+        else
+        {
+            isCull = CamCull(planes);    //该剔除方案有缺陷，实际上存在bounds 与视锥相交，但8个顶点都在视锥外的情况
+        }
     }
 
-
-    
     private bool IsPointInFrustum(Vector3 point,Plane[] planes)
     {
         for (int i = 0; i < planes.Length; i++)
@@ -70,21 +75,21 @@ public class TestFrustumCulling : MonoBehaviour
         corners[7] = new Vector3(corners[0].x,corners[6].y,corners[6].z);
         for (int i = 0; i < 8; i++)
         {
-            if (!UseImplovedWay)     //该剔除方案有缺陷，实际上存在bounds 与视锥相交，但8个顶点都在视锥外的情况
+            if (IsPointInFrustum(corners[i],cullingPlanes))
             {
-                if (IsPointInFrustum(corners[i],cullingPlanes))
-                {
-                    return false;
-                }
+                return false;
             }
-            else
-            {
-                if (IsPointInFrustum(corners[i],cullingPlanes,bounds.size.magnitude/2.0f))
-                {
-                    return false;
-                }
-            }
-            
+        }
+
+        return true;
+    }
+
+    private bool BetterCamCull(Plane[] cullingPlanes)
+    {
+        Bounds bounds = new Bounds(center,size);
+        if (IsPointInFrustum(bounds.center,cullingPlanes,bounds.size.magnitude/2.0f))
+        {
+            return false;
         }
 
         return true;
